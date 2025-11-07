@@ -1,4 +1,4 @@
-const ROWS_PER_PAGE = 20;
+const ROWS_PER_PAGE = 15;
 let allData = {};
 let currentData = [];
 let currentPage = {};
