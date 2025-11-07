@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+h1 { color: #2c3e50; }
+h2 { color: #34495e; margin-top: 20px; }
+h3 { color: #7f8c8d; margin-top: 15px; }
+.filter-box { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+input, select { padding: 8px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px; }
+#searchInput { width: 55%; margin-right: 10px; }
+#yearFilter { width: 30%; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #3498db; color: white; padding: 10px; text-align: left; }
+td { padding: 10px; border: 1px solid #ddd; }
+tr:nth-child(even) { background: #f9f9f9; }
+.show-more { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 20px 0; font-size: 16px; }
+.show-more:hover { background: #2980b9; }
+.year-count { color: #666; font-style: italic; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<h1>Alumni Job Outcomes – What Can I Do With My BIE Degree?</h1>
+
+<h2>Purpose of this Section</h2>
+<p>This section highlights the career paths of BIE alumni from the Classes of 2025 to 2021. It helps current BIE students understand potential opportunities after graduation and sparks ideas for their own career journeys.</p>
+
+<h2>How to Use This Resource</h2>
+<p>Review the jobs and organizations below with curiosity. Look for patterns, industries, and roles that interest you. Use this page as a starting point for exploration, not a checklist.</p>
+
+<h2>What You Will Gain from This Section</h2>
+<ul>
+  <li>Awareness of where BIE alumni from each graduating year have been hired</li>
+  <li>Insight into the types of roles available to BIE graduates</li>
+  <li>Ideas to guide your career discovery, networking, and internship search</li>
+</ul>
+
+<h2>How We Created Categories</h2>
+<p>Each job is assigned a <strong>primary category</strong> based on its main function. Additional tags are included to show overlap between fields.</p>
+
+<h2>Data Disclaimer</h2>
+<p><em>This data is self-reported and reflects the roles held by alumni at the time of collection. It provides examples of possible career paths but is not exhaustive of all alumni outcomes.</em></p>
+
+<hr>
+
+<div class="filter-box">
+  <input type="text" id="searchInput" placeholder="Search jobs, companies, or categories...">
+  <select id="yearFilter">
+    <option value="all">Show All Years</option>
+    <option value="2025">2025</option>
+    <option value="2024">2024</option>
+    <option value="2023">2023</option>
+    <option value="2022">2022</option>
+    <option value="2021">2021</option>
+  </select>
+</div>
+
+<div id="results"></div>
+
+</body>
+</html>
