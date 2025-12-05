@@ -33,7 +33,7 @@ async function loadCSV(url) {
     const role = cells[1]?.trim() || '—';
     const employer = cells[2]?.trim() || '—';
     const primary = cells[4]?.trim() || '—'; // Correct: Role Category
-const tag1 = cells[5]?.trim() || '—';    // Correct: Tag 1
+    const tag1 = cells[5]?.trim() || '—';    // Correct: Tag 1
 
     if (!year || year.toLowerCase() === "graduation year") return;
 
