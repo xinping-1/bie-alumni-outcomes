@@ -32,8 +32,8 @@ async function loadCSV(url) {
     let year = cells[0]?.trim();
     const role = cells[1]?.trim() || '—';
     const employer = cells[2]?.trim() || '—';
-    const primary = cells[3]?.trim() || '—';  // Role Category
-    const tag1 = cells[4]?.trim() || '—';     // Tag 1
+    const primary = cells[4]?.trim() || '—'; // Correct: Role Category
+const tag1 = cells[5]?.trim() || '—';    // Correct: Tag 1
 
     if (!year || year.toLowerCase() === "graduation year") return;
 
