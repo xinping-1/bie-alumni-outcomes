@@ -1,27 +1,35 @@
+/* ===========================================
+   BIE Alumni Outcomes Display Script - Smart Tags Version
+   Supports Tag1/Tag2/Tag3 merged into UI and sorting
+   =========================================== */
+
 const ROWS_PER_PAGE = 15;
 let allData = {};
 let currentData = [];
 let currentPage = {};
 
 document.addEventListener('DOMContentLoaded', function () {
-  loadCSV('Exploration Page - Categorized_v2.csv').then(() => {
+  loadCSV('data.csv').then(() => {
+
     document.getElementById('searchInput')
       .addEventListener('keyup', filterAndDisplay);
-    
+
     document.getElementById('yearFilter')
       .addEventListener('change', filterAndDisplay);
 
     window.showMore = showMore;
+
     filterAndDisplay();
   });
 });
 
+/* ====================== CSV LOADER ====================== */
 async function loadCSV(url) {
   const response = await fetch(url);
   const text = await response.text();
 
   const lines = text.trim().split('\n');
-  const dataLines = lines.slice(1); // Ignore ONLY the header
+  const dataLines = lines.slice(1); // Skip header
 
   allData = {};
 
@@ -29,36 +37,35 @@ async function loadCSV(url) {
     const cells = parseCSVLine(line);
     if (!cells.length) return;
 
-    let year = cells[0]?.trim();
-    const role = cells[1]?.trim() || '—';
-    const employer = cells[2]?.trim() || '—';
-    const primary = cells[4]?.trim() || '—'; // Correct: Role Category
-    const tag1 = cells[5]?.trim() || '—';    // Correct: Tag 1
+    const year = cells[0]?.trim();
+    const role = cells[1]?.trim() || '';
+    const employer = cells[2]?.trim() || '';
+    const primary = cells[3]?.trim() || '';
 
-    if (!year || year.toLowerCase() === "graduation year") return;
+    // NEW → Merge Tag1 + Tag2 + Tag3
+    const tags = [
+      cells[4]?.trim(),
+      cells[5]?.trim(),
+      cells[6]?.trim()
+    ].filter(tag => tag && tag !== primary); // Avoid duplicate primary in tags
 
-    // Fix years like 2025.0 → 2025
-    if (!isNaN(year)) {
-      year = parseInt(year); 
-    }
+    const tagsString = tags.join(', ');
+
+    if (!year || year === 'Graduation Year') return;
 
     if (!allData[year]) allData[year] = [];
-    allData[year].push([primary, role, employer, tag1]);
+    allData[year].push({ primary, role, employer, tags: tagsString });
   });
 }
 
-// Parse CSV lines including quotes
+/* Proper CSV parsing to handle commas inside quotes */
 function parseCSVLine(line) {
   const result = [];
   let current = '';
   let inQuotes = false;
 
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"' && line[i + 1] === '"') {
-      current += '"';
-      i++;
-    } else if (char === '"') {
+  for (let char of line) {
+    if (char === '"') {
       inQuotes = !inQuotes;
     } else if (char === ',' && !inQuotes) {
       result.push(current);
@@ -71,23 +78,31 @@ function parseCSVLine(line) {
   return result;
 }
 
+/* ====================== FILTER & SORTING ====================== */
 function filterAndDisplay() {
   const search = document.getElementById('searchInput').value.toLowerCase();
-  const yearFilter = document.getElementById('yearFilter').value;
+  const year = document.getElementById('yearFilter').value;
 
   currentData = [];
-  const years = yearFilter === 'all' 
+
+  const years = year === 'all'
     ? Object.keys(allData).sort().reverse()
-    : [yearFilter];
+    : [year];
 
   years.forEach(y => {
     if (allData[y]) {
-      allData[y].forEach(row => {
-        const matchesSearch = search === '' || row.some(
-          cell => cell.toLowerCase().includes(search)
-        );
-        if (matchesSearch) currentData.push({ year: y, data: row });
-      });
+      let filteredRows = allData[y].filter(row =>
+        search === '' ||
+        row.primary.toLowerCase().includes(search) ||
+        row.role.toLowerCase().includes(search) ||
+        row.employer.toLowerCase().includes(search) ||
+        row.tags.toLowerCase().includes(search)
+      );
+
+      // Sort alphabetically by Primary category
+      filteredRows.sort((a, b) => a.primary.localeCompare(b.primary));
+
+      filteredRows.forEach(data => currentData.push({ year: y, data }));
     }
   });
 
@@ -97,31 +112,32 @@ function filterAndDisplay() {
   displayResults();
 }
 
+/* ====================== DISPLAY ====================== */
 function displayResults() {
   const container = document.getElementById('results');
   container.innerHTML = '';
 
-  const grouped = {};
+  const yearGroups = {};
   currentData.forEach(item => {
-    if (!grouped[item.year]) grouped[item.year] = [];
-    grouped[item.year].push(item.data);
+    if (!yearGroups[item.year]) yearGroups[item.year] = [];
+    yearGroups[item.year].push(item.data);
   });
 
-  const years = Object.keys(grouped).sort().reverse();
+  const years = Object.keys(yearGroups).sort().reverse();
 
   years.forEach(year => {
-    const rows = grouped[year];
+    const rows = yearGroups[year];
     const showing = Math.min(currentPage[year], rows.length);
 
     const section = document.createElement('div');
     section.innerHTML = `
-      <h3 style="color: #2c5f8d; border-bottom: 2px solid #2c5f8d; padding-bottom: 5px;">
+      <h3 style="color:#2c5f8d; border-bottom:2px solid #2c5f8d; padding-bottom:5px;">
         Class of ${year}
       </h3>
-      <p class="year-count">Showing ${showing} of ${rows.length} positions</p>
+      <p class="year-count">Showing ${showing} of ${rows.length} roles</p>
       <table>
         <thead>
-          <tr style="background-color: #2c5f8d; color: white;">
+          <tr style="background-color:#2c5f8d; color:white;">
             <th>Primary Category</th>
             <th>Job Title</th>
             <th>Organization</th>
@@ -131,39 +147,35 @@ function displayResults() {
         <tbody id="tbody-${year}">
         </tbody>
       </table>
-      ${
-        showing < rows.length
-        ? `<button class="show-more" onclick="showMore('${year}')">
-             Show More (${rows.length - showing} remaining)
-           </button>`
-        : ''
-      }
+      ${showing < rows.length
+        ? `<button class="show-more" onclick="showMore('${year}')">Show More (${rows.length - showing} remaining)</button>`
+        : ''}
     `;
 
     container.appendChild(section);
-    
+
     const tbody = document.getElementById(`tbody-${year}`);
     rows.slice(0, showing).forEach((row, idx) => {
       const tr = document.createElement('tr');
-      tr.style.backgroundColor = idx % 2 === 0 ? '#f9f9f9' : 'white';
       tr.innerHTML = `
-        <td>${row[0]}</td>
-        <td>${row[1]}</td>
-        <td>${row[2]}</td>
-        <td>${row[3]}</td>
+        <td>${row.primary}</td>
+        <td>${row.role}</td>
+        <td>${row.employer}</td>
+        <td>${row.tags || ''}</td>
       `;
       tbody.appendChild(tr);
     });
   });
 
-  if (!years.length) {
+  if (currentData.length === 0) {
     container.innerHTML = `
       <p style="text-align:center; color:#666; padding:20px;">
-        No results found. Try a different search or year.
+        No results found. Try a different search term or year.
       </p>`;
   }
 }
 
+/* ====================== BUTTON HANDLER ====================== */
 function showMore(year) {
   currentPage[year] += ROWS_PER_PAGE;
   displayResults();
