@@ -29,7 +29,7 @@ async function loadCSV(url) {
   const text = await response.text();
 
   const lines = text.trim().split('\n');
-  const dataLines = lines.slice(1); // Skip header
+  const dataLines = lines.slice(1);
 
   allData = {};
 
@@ -37,20 +37,19 @@ async function loadCSV(url) {
     const cells = parseCSVLine(line);
     if (!cells.length) return;
 
-    const year = cells[0]?.trim();
+    // FIX: Clean year formatting (remove ".0")
+    let year = cells[0]?.trim();
+    if (year.endsWith('.0')) year = year.slice(0, -2);
+
     const role = cells[1]?.trim() || '';
     const employer = cells[2]?.trim() || '';
-
-    // 📌 FIXED: Primary is column 4 (index 4)
     const primary = cells[4]?.trim() || '';
 
-    // 📌 FIXED: Tag1/Tag2/Tag3 are columns 5–7
     const tags = [
       cells[5]?.trim(),
       cells[6]?.trim(),
       cells[7]?.trim()
-    ]
-      .filter(tag => tag && tag !== primary);
+    ].filter(tag => tag && tag !== primary);
 
     const tagsString = tags.join(', ');
 
