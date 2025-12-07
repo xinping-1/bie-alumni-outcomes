@@ -1,6 +1,6 @@
 /* ===========================================
-   BIE Alumni Outcomes Display Script - Smart Tags Version
-   Supports Tag1/Tag2/Tag3 merged into UI and sorting
+   BIE Alumni Outcomes Display Script - Final v6
+   Reads Primary + Tag1/Tag2/Tag3 correctly
    =========================================== */
 
 const ROWS_PER_PAGE = 15;
@@ -9,7 +9,7 @@ let currentData = [];
 let currentPage = {};
 
 document.addEventListener('DOMContentLoaded', function () {
-  loadCSV('data.csv').then(() => {
+  loadCSV('Exploration Page - Categorized_v6.csv').then(() => {
 
     document.getElementById('searchInput')
       .addEventListener('keyup', filterAndDisplay);
@@ -40,25 +40,28 @@ async function loadCSV(url) {
     const year = cells[0]?.trim();
     const role = cells[1]?.trim() || '';
     const employer = cells[2]?.trim() || '';
-    const primary = cells[3]?.trim() || '';
 
-    // NEW → Merge Tag1 + Tag2 + Tag3
+    // 📌 FIXED: Primary is column 4 (index 4)
+    const primary = cells[4]?.trim() || '';
+
+    // 📌 FIXED: Tag1/Tag2/Tag3 are columns 5–7
     const tags = [
-      cells[4]?.trim(),
       cells[5]?.trim(),
-      cells[6]?.trim()
-    ].filter(tag => tag && tag !== primary); // Avoid duplicate primary in tags
+      cells[6]?.trim(),
+      cells[7]?.trim()
+    ]
+      .filter(tag => tag && tag !== primary);
 
     const tagsString = tags.join(', ');
 
     if (!year || year === 'Graduation Year') return;
-
     if (!allData[year]) allData[year] = [];
+
     allData[year].push({ primary, role, employer, tags: tagsString });
   });
 }
 
-/* Proper CSV parsing to handle commas inside quotes */
+/* CSV parsing helper */
 function parseCSVLine(line) {
   const result = [];
   let current = '';
@@ -91,7 +94,7 @@ function filterAndDisplay() {
 
   years.forEach(y => {
     if (allData[y]) {
-      let filteredRows = allData[y].filter(row =>
+      let rows = allData[y].filter(row =>
         search === '' ||
         row.primary.toLowerCase().includes(search) ||
         row.role.toLowerCase().includes(search) ||
@@ -100,9 +103,9 @@ function filterAndDisplay() {
       );
 
       // Sort alphabetically by Primary category
-      filteredRows.sort((a, b) => a.primary.localeCompare(b.primary));
+      rows.sort((a, b) => a.primary.localeCompare(b.primary));
 
-      filteredRows.forEach(data => currentData.push({ year: y, data }));
+      rows.forEach(data => currentData.push({ year: y, data }));
     }
   });
 
@@ -117,16 +120,16 @@ function displayResults() {
   const container = document.getElementById('results');
   container.innerHTML = '';
 
-  const yearGroups = {};
+  const grouped = {};
   currentData.forEach(item => {
-    if (!yearGroups[item.year]) yearGroups[item.year] = [];
-    yearGroups[item.year].push(item.data);
+    if (!grouped[item.year]) grouped[item.year] = [];
+    grouped[item.year].push(item.data);
   });
 
-  const years = Object.keys(yearGroups).sort().reverse();
+  const years = Object.keys(grouped).sort().reverse();
 
   years.forEach(year => {
-    const rows = yearGroups[year];
+    const rows = grouped[year];
     const showing = Math.min(currentPage[year], rows.length);
 
     const section = document.createElement('div');
@@ -144,14 +147,12 @@ function displayResults() {
             <th>Tags</th>
           </tr>
         </thead>
-        <tbody id="tbody-${year}">
-        </tbody>
+        <tbody id="tbody-${year}"></tbody>
       </table>
       ${showing < rows.length
         ? `<button class="show-more" onclick="showMore('${year}')">Show More (${rows.length - showing} remaining)</button>`
         : ''}
     `;
-
     container.appendChild(section);
 
     const tbody = document.getElementById(`tbody-${year}`);
@@ -168,14 +169,13 @@ function displayResults() {
   });
 
   if (currentData.length === 0) {
-    container.innerHTML = `
-      <p style="text-align:center; color:#666; padding:20px;">
-        No results found. Try a different search term or year.
-      </p>`;
+    container.innerHTML = `<p style="text-align:center; color:#666; padding:20px;">
+      No results found. Try a different search term or year.
+    </p>`;
   }
 }
 
-/* ====================== BUTTON HANDLER ====================== */
+/* ====================== SHOW MORE BUTTON ====================== */
 function showMore(year) {
   currentPage[year] += ROWS_PER_PAGE;
   displayResults();
