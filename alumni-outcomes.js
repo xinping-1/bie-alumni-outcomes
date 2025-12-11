@@ -9,7 +9,7 @@ let currentData = [];
 let currentPage = {};
 
 document.addEventListener('DOMContentLoaded', function () {
-  loadCSV('data.csv').then(() => {
+  loadCSV('Categorized_v6.csv').then(() => {
 
     document.getElementById('searchInput')
       .addEventListener('keyup', filterAndDisplay);
