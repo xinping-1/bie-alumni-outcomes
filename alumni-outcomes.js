@@ -29,7 +29,8 @@ async function loadCSV(url) {
   const text = await response.text();
 
   const lines = text.trim().split('\n');
-  const headers = parseCSVLine(lines[0]);
+  const headers = parseCSVLine(lines[0]).map(h => h.trim());
+
   const dataLines = lines.slice(1);
 
   allData = {};
@@ -48,7 +49,8 @@ async function loadCSV(url) {
 
     const role = get("Role");
     const employer = get("Employer");
-    const primary = get("Pred Broad");
+    const primary = get("Pred Broad Category");
+
 
     const tagsRaw = [
       get("Pred Tag 1"),
