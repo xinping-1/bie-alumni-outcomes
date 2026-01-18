@@ -1,6 +1,6 @@
 /* ===========================================
-   BIE Alumni Outcomes Display Script - Final v6
-   Reads Primary + Tag1/Tag2/Tag3 correctly
+   BIE Alumni Outcomes Display Script - v7
+   Reads Pred Broad + Pred Tag1/Tag2/Tag3
    =========================================== */
 
 const ROWS_PER_PAGE = 15;
@@ -9,7 +9,7 @@ let currentData = [];
 let currentPage = {};
 
 document.addEventListener('DOMContentLoaded', function () {
-  loadCSV('Categorized_v6.csv').then(() => {
+  loadCSV('predictions.csv').then(() => {
 
     document.getElementById('searchInput')
       .addEventListener('keyup', filterAndDisplay);
@@ -29,6 +29,7 @@ async function loadCSV(url) {
   const text = await response.text();
 
   const lines = text.trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
   const dataLines = lines.slice(1);
 
   allData = {};
@@ -37,23 +38,29 @@ async function loadCSV(url) {
     const cells = parseCSVLine(line);
     if (!cells.length) return;
 
-    // FIX: Clean year formatting (remove ".0")
-    let year = cells[0]?.trim();
-    if (year.endsWith('.0')) year = year.slice(0, -2);
+    function get(colName) {
+      return cells[headers.indexOf(colName)]?.trim() || "";
+    }
 
-    const role = cells[1]?.trim() || '';
-    const employer = cells[2]?.trim() || '';
-    const primary = cells[4]?.trim() || '';
+    // Extract fields from predictions.csv
+    let year = get("Graduation Year");
+    if (year.endsWith(".0")) year = year.slice(0, -2);
 
-    const tags = [
-      cells[5]?.trim(),
-      cells[6]?.trim(),
-      cells[7]?.trim()
-    ].filter(tag => tag && tag !== primary);
+    const role = get("Role");
+    const employer = get("Employer");
+    const primary = get("Pred Broad");
 
-    const tagsString = tags.join(', ');
+    const tagsRaw = [
+      get("Pred Tag 1"),
+      get("Pred Tag 2"),
+      get("Pred Tag 3")
+    ];
 
-    if (!year || year === 'Graduation Year') return;
+    // Remove blanks & duplicates & tags identical to primary
+    const tags = [...new Set(tagsRaw.filter(t => t && t !== primary))];
+    const tagsString = tags.join(", ");
+
+    if (!year || year === "Graduation Year") return;
     if (!allData[year]) allData[year] = [];
 
     allData[year].push({ primary, role, employer, tags: tagsString });
@@ -94,7 +101,7 @@ function filterAndDisplay() {
   years.forEach(y => {
     if (allData[y]) {
       let rows = allData[y].filter(row =>
-        search === '' ||
+        !search ||
         row.primary.toLowerCase().includes(search) ||
         row.role.toLowerCase().includes(search) ||
         row.employer.toLowerCase().includes(search) ||
@@ -155,19 +162,19 @@ function displayResults() {
     container.appendChild(section);
 
     const tbody = document.getElementById(`tbody-${year}`);
-    rows.slice(0, showing).forEach((row, idx) => {
+    rows.slice(0, showing).forEach((row) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${row.primary}</td>
         <td>${row.role}</td>
         <td>${row.employer}</td>
-        <td>${row.tags || ''}</td>
+        <td>${row.tags}</td>
       `;
       tbody.appendChild(tr);
     });
   });
 
-  if (currentData.length === 0) {
+  if (!currentData.length) {
     container.innerHTML = `<p style="text-align:center; color:#666; padding:20px;">
       No results found. Try a different search term or year.
     </p>`;
